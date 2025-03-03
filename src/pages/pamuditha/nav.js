@@ -1,48 +1,41 @@
 import React from 'react';
 import {Link, useLocation, useNavigate} from 'react-router-dom';
-import Cookies from 'js-cookie';
 import {useLogout} from './authUtils';
 import logo2 from "../../images/logow.png";
 import cartIcon from '../../images/cart.png';
 
 function Navbar({cartCount}) { // Accept cartCount as a prop
     const logout = useLogout(); // Using the custom hook
-    const [cookieExists, setCookieExists] = React.useState(false);
+    const [isUserAuthenticated, setIsUserAuthenticated] = React.useState(false); // Replace cookieExists with user authentication status
     const navigate = useNavigate();
     const location = useLocation();
 
     React.useEffect(() => {
-        // Check for the cookie immediately when the component mounts or location changes
-        const checkCookie = () => {
-            const cookie = Cookies.get('diamond');
-            console.log('Cookie check:', cookie ? 'Found' : 'Not found');
-            setCookieExists(!!cookie);
+        const checkUser = async () => {
+            try {
+                const response = await fetch('https://servertest-isos.onrender.com/api/user/verify', {
+                    credentials: 'include' // Include credentials with the request
+                });
+
+                if (response.status === 403 || response.status === 401) {
+                    navigate('/'); // Redirect if not authorized
+                    return;
+                }
+
+                const data = await response.json();
+                if (!data.isUser) {
+                    navigate('/'); // Redirect if the user is not valid
+                } else {
+                    setIsUserAuthenticated(true); // Mark user as authenticated
+                }
+            } catch (error) {
+                console.error('Error checking user role:', error);
+                navigate('/'); // Redirect in case of an error
+            }
         };
 
-        checkCookie(); // Initial check for the cookie
-
-        // Detect section to scroll after navigating from another page
-        const hash = location.hash;
-        if (hash) {
-            const sectionId = hash.replace('#', '');
-            console.log('Scrolling to section:', sectionId);
-            scrollToSection(sectionId);
-        }
-
-        // Watch for location changes and recheck the cookie
-        const handleLocationChange = () => {
-            console.log('Location changed, checking cookie...');
-            checkCookie();
-        };
-
-        window.addEventListener('popstate', handleLocationChange); // Listen for navigation changes
-
-        // Cleanup the listener when the component unmounts
-        return () => {
-            window.removeEventListener('popstate', handleLocationChange); // Cleanup listener
-        };
-    }, [location]); // Re-run the effect when location changes
-
+        checkUser();
+    }, [navigate]);
 
     const scrollToSection = (id) => {
         const element = document.getElementById(id);
@@ -61,8 +54,7 @@ function Navbar({cartCount}) { // Accept cartCount as a prop
 
     const handleLogout = () => {
         logout(); // Call the logout function from the custom hook
-        Cookies.remove('diamond');
-        setCookieExists(false); // Set cookieExists to false after logout
+        setIsUserAuthenticated(false); // Set user authentication status to false after logout
         navigate('/');
     };
 
@@ -114,7 +106,7 @@ function Navbar({cartCount}) { // Accept cartCount as a prop
                                         Cart |
                                         <img src={cartIcon} alt="Cart" className="w-4 h-4 inline-block"/>
                                     </span>
-                                    {cookieExists && (
+                                    {isUserAuthenticated && (
                                         <span
                                             className="absolute -top-2 -right-2 bg-pink-600 text-white rounded-full px-1 text-xs">
                                             {cartCount}
@@ -130,7 +122,7 @@ function Navbar({cartCount}) { // Accept cartCount as a prop
                                         Menu
                                     </a>
                                     <div className="dropdown-menu" aria-labelledby="dropdown07">
-                                        {cookieExists ? (
+                                        {isUserAuthenticated ? (
                                             <>
                                                 <a className="dropdown-item julius-sans-one-regular"
                                                    href="/userp">Profile</a>

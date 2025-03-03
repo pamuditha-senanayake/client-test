@@ -12,17 +12,36 @@ function Navbar({cartCount}) { // Accept cartCount as a prop
     const location = useLocation();
 
     React.useEffect(() => {
+        // Check for the cookie immediately when the component mounts or location changes
         const checkCookie = () => {
             const cookie = Cookies.get('diamond');
+            console.log('Cookie check:', cookie ? 'Found' : 'Not found');
             setCookieExists(!!cookie);
         };
 
-        checkCookie(); // Check on component mount
+        checkCookie(); // Initial check for the cookie
 
-        const interval = setInterval(checkCookie, 5000); // Check every 5s
+        // Detect section to scroll after navigating from another page
+        const hash = location.hash;
+        if (hash) {
+            const sectionId = hash.replace('#', '');
+            console.log('Scrolling to section:', sectionId);
+            scrollToSection(sectionId);
+        }
 
-        return () => clearInterval(interval); // Cleanup on unmount
-    }, []);
+        // Watch for location changes and recheck the cookie
+        const handleLocationChange = () => {
+            console.log('Location changed, checking cookie...');
+            checkCookie();
+        };
+
+        window.addEventListener('popstate', handleLocationChange); // Listen for navigation changes
+
+        // Cleanup the listener when the component unmounts
+        return () => {
+            window.removeEventListener('popstate', handleLocationChange); // Cleanup listener
+        };
+    }, [location]); // Re-run the effect when location changes
 
 
     const scrollToSection = (id) => {
@@ -43,6 +62,7 @@ function Navbar({cartCount}) { // Accept cartCount as a prop
     const handleLogout = () => {
         logout(); // Call the logout function from the custom hook
         Cookies.remove('diamond');
+        setCookieExists(false); // Set cookieExists to false after logout
         navigate('/');
     };
 

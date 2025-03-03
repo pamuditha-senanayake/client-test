@@ -28,7 +28,7 @@ const SidebarItem = ({title, links}) => {
 
 const Sidebar = () => {
     const logout = useLogout(); // Using the custom hook for logout
-
+    console.log("Sidebar rendered.");
     const sections = [
         {
             title: 'Home',
@@ -56,7 +56,6 @@ const Sidebar = () => {
                 {text: 'Product List', url: '/ProductLists'},
 
 
-
             ],
         },
         {
@@ -75,7 +74,6 @@ const Sidebar = () => {
                 {text: 'Add New Service', url: '/addservice'},
                 {text: 'Services', url: '/adminservicview'},
                 {text: 'Manage Categories', url: '/addcategory'},
-
 
 
             ],
